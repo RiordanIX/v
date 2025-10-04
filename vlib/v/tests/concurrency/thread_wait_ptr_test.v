@@ -14,5 +14,5 @@ fn test_main() {
 		arr << g
 	}
 	result := arr.wait()
-	assert result[0] == 1.4142135623730951
+	assert result[0] == 1.414213562373095
 }

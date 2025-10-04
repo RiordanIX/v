@@ -204,7 +204,6 @@ pub fn log(a f64) f64 {
 // e_logb.c
 // Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
 //
-
 //
 // ====================================================
 // Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -214,8 +213,10 @@ pub fn log(a f64) f64 {
 // software is freely granted, provided that this notice
 // is preserved.
 // ====================================================
-//
 
+// This specific f32 version of log is to prevent casting from f64 to f32.
+// Some embedded devices can't handle 64 bit floats, in which case they can use
+// the `f` variant of log.
 pub fn logf(a f32) f32 {
 	ln2_hi := f32(6.9313812256e-01) // 0x3f317180
 	ln2_lo := f32(9.0580006145e-06) // 0x3717f7d1
@@ -306,6 +307,7 @@ pub fn logf(a f32) f32 {
 	}
 }
 
+// Included for completion's sake. Use ilogb instead if possible
 pub fn logb(a f64) f64 {
 	mut x := a
 	mut hw := get_high_word(x)
@@ -327,6 +329,7 @@ pub fn logb(a f64) f64 {
 	}
 }
 
+// Included for completion's sake. Use ilogb instead if possible
 pub fn logbf(a f32) f32 {
 	two25 := f32(3.355443200e+07)
 	mut x := a
