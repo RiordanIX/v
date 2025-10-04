@@ -198,3 +198,137 @@ pub fn log(a f64) f64 {
 	hfsq := 0.5 * f * f
 	return k * ln2_hi - ((hfsq - (s * (hfsq + r) + k * ln2_lo)) - f)
 }
+
+/* e_logf.c -- float version of e_log.c.
+ * e_logbf.c
+ * e_logb.c
+ * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
+ */
+
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
+
+pub fn logf(a f32) f32 {
+	ln2_hi := f32(6.9313812256e-01)/* 0x3f317180 */
+	ln2_lo := f32(9.0580006145e-06)/* 0x3717f7d1 */
+	two25 := f32(3.355443200e+07) /* 0x4c000000 */
+	lg1 := f32(6.6666668653e-01) /* 3F2AAAAB */
+	lg2 := f32(4.0000000596e-01) /* 3ECCCCCD */
+	lg3 := f32(2.8571429849e-01) /* 3E924925 */
+	lg4 := f32(2.2222198546e-01) /* 3E638E29 */
+	lg5 := f32(1.8183572590e-01) /* 3E3A3325 */
+	lg6 := f32(1.5313838422e-01) /* 3E1CD04F */
+	lg7 := f32(1.4798198640e-01) /* 3E178897 */
+	zero := f32(0.0)
+
+	mut x := a
+	if is_nan32(x) || is_inf32(x, 1) {
+		return x
+	} else if x < 0 {
+		return nan32()
+	} else if x == 0 {
+		return inf32(-1)
+	}
+
+	mut k:=i32(0)
+	mut ix := f32_bits(x)
+	if ix < 0x00800000 {			/* a < 2**-126  */
+		if (ix&0x7fffffff)==0{ return inf32(-1) }/* log(+-0)=-inf */
+		if ix<0{ return nan32() }	/* log(-#) = NaN */
+		k -= 25
+		x *= two25; /* subnormal number, scale up x */
+		ix = f32_bits(x)
+	}
+	if ix >= 0x7f800000{ return x+x }
+	k += i32((ix>>23)-127)
+	ix = ix & 0x007fffff
+	mut i := (ix+(0x95f64<<3))&0x800000
+	x = f32_from_bits(ix | (i^0x3f800000))/* normalize x or x/2 */
+	k += i32(i>>23)
+	f := x-1.0
+	mut dk:=f32(0)
+	if (0x007fffff&(0x8000+ix))<0xc000 {	/* -2**-9 <= f < 2**-9 */
+		if f==zero {
+			if k==0 {
+				return zero
+			} else {
+				dk=k
+				return dk*ln2_hi+dk*ln2_lo
+			}
+		}
+		r := f32(f*f*(0.5-0.33333333333333333*f))
+		if k==0 {
+			return f-r
+		} else {
+			dk=f32(k)
+			// fmt.println("k!=0, and f != 0")
+			return dk*ln2_hi-((r-dk*ln2_lo)-f)
+		}
+	}
+	s := f32(f/(2.0+f))
+	dk = f32(k)
+	z := f32(s*s)
+	i = ix-(0x6147a<<3)
+	w := f32(z*z)
+	j := (0x6b851<<3)-ix
+	t1:= f32(w*(lg2+w*(lg4+w*lg6)))
+	t2:= f32(z*(lg1+w*(lg3+w*(lg5+w*lg7))))
+	i = i|j
+	r := f32(t2+t1)
+	if i>0 {
+		hfsq:=f32(0.5*f*f)
+		if k==0{
+			return f-(hfsq-s*(hfsq+r))
+		} else{
+			return dk*ln2_hi-((hfsq-(s*(hfsq+r)+dk*ln2_lo))-f)
+		}
+	} else {
+		if k==0 {
+			return f-s*(f-r)
+		} else{
+			return dk*ln2_hi-((s*(f-r)-dk*ln2_lo)-f)
+		}
+	}
+}
+
+pub fn logb(a f64) f64 {
+	mut x := a
+	mut hw := get_high_word(x)
+	lw := get_high_word(f64_bits(x)<<32)
+	hw &= 0x7fffffff;			/* high |x| */
+	if (hw|lw)==0 {return -1.0/f64_abs(x)}
+	if hw>=0x7ff00000 {return x*x}
+	if hw<0x00100000 {
+		x *= two54		 /* convert subnormal x to normal */
+		hw = get_high_word(x)
+		hw &= 0x7fffffff
+		return f64((hw>>20)-1023-54)
+	} else {
+		return f64((hw>>20)-1023)
+	}
+}
+
+pub fn logbf(a f32) f32 {
+	two25 := f32(3.355443200e+07)
+	mut x := a
+	mut ix := f32_bits(x)
+	ix &= 0x7fffffff	/* high |x| */
+	if ix==0 {return f32(-1.0)/f32_abs(x)}
+	if ix>=0x7f800000 {return x*x}
+	if ix<0x00800000 {
+		x *= two25		/* convert subnormal x to normal */
+		ix = f32_bits(x)
+		ix &= 0x7fffffff
+		return f32((ix>>23)-127-25)
+	} else{
+		return f32((ix>>23)-127)
+	}
+}

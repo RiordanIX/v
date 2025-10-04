@@ -4,9 +4,33 @@
 
 module stbi
 
+import math
+
 @[if trace_stbi_allocations ?]
 fn trace_allocation(message string) {
 	eprintln(message)
+}
+
+@[export: 'powf']
+fn powf(a f32, b f32) f32 {
+	return math.powf(a, b)
+}
+
+@[export: 'pow']
+fn pow(a f64, b f64) f64 {
+	return math.pow(a, b)
+}
+
+// 'ceil'
+@[export: 'ceil']
+fn ceil(a f64) f64 {
+	return math.ceil(a)
+}
+
+// 'floor'
+@[export: 'floor']
+fn floor(a f64) f64 {
+	return math.floor(a)
 }
 
 @[export: 'stbi__callback_malloc']
